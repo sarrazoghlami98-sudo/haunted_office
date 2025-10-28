@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Night Shift</title>
+<style>
+  :root{ --bg:#07090c; --ink:#eaf6ff; --muted:#98a9bb; --accent:#78e0ff; --red:#ff4d5d; --ok:#9effb2; --glow:rgba(255,60,70,.55); }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:radial-gradient(1300px 650px at 80% -10%, #0f1b22 0%, var(--bg) 55%) fixed;
+    color:var(--ink);font:17px/1.75 ui-monospace,Menlo,Consolas,monospace;
+  }
+  .wrap{max-width:980px;margin:3vh auto;padding:18px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+  h1{margin:0;font-size:22px;letter-spacing:1px}
+  .sub{color:var(--muted);font-size:13px}
+
+  .term{border:1px solid #1b2b35;border-radius:14px;overflow:hidden;box-shadow:0 0 24px rgba(120,224,255,.12)}
+  .bar{display:flex;gap:8px;padding:10px 12px;background:#0c1318;border-bottom:1px solid #1b2b35}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .dot:nth-child(1){background:#ff6a6a}.dot:nth-child(2){background:#ffd96a}.dot:nth-child(3){background:#6aff96}
+
+  .scene{height:46vh;min-height:300px;background:#0a0f13 center/cover no-repeat;position:relative}
+  .scene::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 160px rgba(0,0,0,.68);pointer-events:none}
+
+  #log{max-height:34vh;min-height:190px;overflow:auto;padding:16px 18px;
+       background:linear-gradient(180deg,rgba(18,24,30,.45),rgba(11,14,18,.85))}
+  .line{margin:8px 0;word-break:break-word}
+  .me{color:var(--accent)}
+  .ghost{color:var(--ink)}
+  .note{color:var(--muted)}
+  .good{color:var(--ok)}
+  .bad{color:var(--red)}
+
+  /* input row */
+  form{display:flex;gap:10px;padding:12px;background:#0c1318;border-top:1px solid #1b2b35}
+  #cmd{flex:1;background:#0a0f13;color:var(--ink);border:1px solid #1b2b35;border-radius:10px;padding:12px 14px;outline:none;font-size:17px}
+  #send{background:#13242c;color:var(--ink);border:1px solid #2a3c46;border-radius:10px;padding:12px 16px;cursor:pointer}
+  #send:hover{filter:brightness(1.08)}
+
+  .tray{position:absolute;left:12px;bottom:12px;background:rgba(6,8,11,.65);
+        border:1px solid #1b2b35;border-radius:10px;padding:6px 10px;font-size:15px}
+  .tray b{letter-spacing:2px;color:var(--red);text-shadow:0 0 8px var(--glow)}
+  .flicker{animation:f 1.1s infinite}
+  @keyframes f{0%{opacity:.3}12%{opacity:.95}18%{opacity:.2}28%{opacity:1}52%{opacity:.6}62%{opacity:1}100%{opacity:.85}}
+
+  .glitch{position:relative;display:inline-block;animation:j 1.5s infinite steps(2,end)}
+  .glitch::before,.glitch::after{content:attr(data-txt);position:absolute;left:0;top:0;opacity:.7}
+  .glitch::before{transform:translate(1px,-1px);color:#f91}
+  .glitch::after{transform:translate(-1px,1px);color:#f00}
+  @keyframes j{0%,39%,70%,100%{transform:translate(0)}40%{transform:translate(1px)}41%{transform:translate(-1px)}71%{transform:translateY(1px)}72%{transform:translateY(-1px)}
+
+  }
+
+  .flash{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .18s}
+  .flash.show{opacity:.92}
+  .face{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;opacity:0;transition:opacity .18s}
+  .face.show{opacity:1}
+  .ghost-img{max-width:360px;width:60vw;height:auto;filter:drop-shadow(0 0 25px rgba(255,255,255,.45));animation:floaty 2s ease-in-out infinite alternate}
+  @keyframes floaty{from{transform:translateY(0) scale(1)}to{transform:translateY(-8px) scale(1.03)}}
+
+  .bloody{color:var(--red);text-shadow:0 0 8px var(--glow),0 0 2px rgba(255,0,0,.6)}
+
+  /* Choices: now readable (white) */
+  .choices{display:flex;gap:8px;flex-wrap:wrap;padding:10px 12px;background:#0c1318;border-top:1px solid #1b2b35}
+  .choice{background:#10181f;border:1px solid #1b2b35;border-radius:10px;padding:8px 12px;cursor:pointer;color:var(--ink)}
+  .choice b{margin-right:6px;color:var(--accent)}
+  .choice:hover{filter:brightness(1.08)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>The Night Shift</h1>
+    <span class="sub">A haunted escape story in the Maya office</span>
+  </header>
+
+  <div class="term">
+    <div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div id="scene" class="scene"></div>
+    <div class="tray">CLUES: <b id="letters" class="flicker">_ _ _ _ _ _ _ _ _ _</b></div>
+    <div id="log"></div>
+
+    <div id="choices" class="choices" hidden></div>
+
+    <form id="io" autocomplete="off">
+      <input id="cmd" placeholder="Type A/B/C, 1/2/3, or a verb (e.g., look, move)…"/>
+      <button id="send" type="submit">Send</button>
+    </form>
+  </div>
+</div>
+
+<!-- jump-scare overlay -->
+<div id="flash" class="flash"></div>
+<div id="face" class="face" aria-hidden="true"><img src="images/ghost.png" class="ghost-img" alt=""></div>
+
+<script>
+/* ---------- DOM ---------- */
+const logEl=document.getElementById('log');
+const sceneEl=document.getElementById('scene');
+const input=document.getElementById('cmd');
+const lettersEl=document.getElementById('letters');
+const flash=document.getElementById('flash');
+const face=document.getElementById('face');
+const choicesEl=document.getElementById('choices');
+
+/* ---------- STATE ---------- */
+let userName="Guest", freed=false;
+const SECRET="INNOVATION".split('');
+let bag=SECRET.slice().sort(()=>Math.random()-0.5);
+let found=[], iScene=0, tries=3, finalPhase=false, finalTries=3;
+let ghost3Done=false, ghost8Done=false;
+let finalHintIdx=0;
+
+/* ---------- SCENES (10) ---------- */
+/* Varying correct choice positions across scenes */
+const SCENES=[
+  {id:"lobby", fileDark:"dark_maya_entrence.png", fileLight:"light_maya_entrence.png",
+   enter:"The Maya lobby is empty. The lights argue about staying on.",
+   challenge:"A reception screen flickers: <span class='glitch' data-txt='WELCOME TO MAYA HTT'>WELCOME TO MAYA HTT</span>.",
+   accept:[/look|scan|observe|read|touch.*screen|screen/],
+   hints:["It twitches when you watch it.","Don't touch—just notice.","Try <b>look</b>."],
+   success:"The cursor trembles; something inside the monitor blinks back.",
+   choices:[
+     { text:"Call for security",  kind:"flavor",  response:"Your voice echoes. No one answers. The elevator hums nervously." },       // A
+     { text:"Look at the screen", kind:"correct", response:"The cursor trembles; something inside the monitor blinks back." },        // B (correct)
+     { text:"Try your badge again", kind:"flavor", response:"The reader beeps once, then dies completely. Something’s drained it." } // C
+   ],
+   sfx:"creak", flicker:true},
+
+  {id:"hall", file:"maya_hall.png",
+   enter:"A corridor yawns ahead. Footsteps echo behind you.",
+   challenge:"A faint voice: “Move while you still can.”",
+   accept:[/^(move|run|walk)$/i,/\bmove\b|\brun\b|\bwalk\b/i],
+   hints:["It wants you to go now.","Faster might be safer.","Try <b>move</b> or <b>walk</b> or <b>run</b>."],
+   success:"Your steps quicken as lights stutter awake.",
+   choices:[
+     { text:"Look back",    kind:"flavor",  response:"Nothing there. But the air behind you feels crowded." },  // A
+     { text:"Stay still",   kind:"flavor",  response:"The whisper grows colder: “I said move.”" },              // B
+     { text:"Move forward", kind:"correct", response:"Your steps quicken as lights stutter awake." }            // C (correct)
+   ],
+   sfx:"door"},
+
+  {id:"mirror", file:"maya_mirror_room.png",
+   enter:"The mirror room. Your reflection types before you.",
+   challenge:"The glass asks for a password it already knows.",
+   acceptDynamic:()=>[ new RegExp('^'+escapeRegex(userName)+'$','i'), /mirror|reflect|reflection|say my name|my name/ ],
+   hints:["It knows you already.","Mirrors prefer introductions.","Try your <b>name</b>."],
+   success:"The reflection smiles and mouths your name.",
+   choices:[
+     { text:"Say your name",   kind:"correct", response:"The reflection smiles and mouths your name." }, // A (correct)
+     { text:"Say “password”",  kind:"flavor",  response:"The glass fogs with laughter." },               // B
+     { text:"Turn away",       kind:"flavor",  response:"You glimpse movement even as you look elsewhere." } // C
+   ],
+   sfx:"glass", ghostCue:true},
+
+  {id:"coffee", file:"maya_cofee_table.png",
+   enter:"Two cups steam on the table. Someone was just here.",
+   challenge:"A whisper: “Close your eyes. Don’t turn around.”",
+   accept:[/close.*eyes|eyes.*closed|keep eyes shut|i close my eyes/],
+   hints:["Blink slower.","Dark helps here.","Try <b>close my eyes</b>."],
+   success:"Darkness calms the room; a breath at your neck stops.",
+   choices:[
+     { text:"Turn around",    kind:"flavor",  response:"Cold air pours over your shoulders. Nothing stands there—yet." }, // A
+     { text:"Close your eyes",kind:"correct", response:"Darkness calms the room; a breath at your neck stops." },         // B (correct)
+     { text:"Speak loudly",   kind:"flavor",  response:"Your voice disturbs dust motes that weren’t there a second ago." } // C
+   ],
+   sfx:"whisper"},
+
+  {id:"cafeteria", file:"cafeteria_dark.png",
+   enter:"Cafeteria. Tables like altars. The exit sign blinks off-beat.",
+   challenge:"On the wall: symbols that aren’t handwriting.",
+   accept:[/decode|read|inspect|symbols|runes|translate/],
+   hints:["Those marks can be read.","Meaning leaks if you watch long enough.","Try <b>decode</b>."],
+   success:"The runes dissolve, leaving only a red letter.",
+   choices:[
+     { text:"Ignore the wall",  kind:"flavor",  response:"The exit sign blinks a different rhythm now—like a countdown." }, // A
+     { text:"Wipe the marks",   kind:"flavor",  response:"Your fingers come away clean, but the marks look fresher." },     // B
+     { text:"Decode the symbols", kind:"correct", response:"The runes dissolve, leaving only a red letter." }              // C (correct)
+   ],
+   sfx:"glass"},
+
+  {id:"meeting", file:"meeting_room.png",
+   enter:"Glass-walled meeting room. The door won't budge.",
+   challenge:"Something knocks once from the other side.",
+   accept:[/knock|tap|knock the door|knock on door/],
+   hints:["The sound wants an answer.","Be polite and echo it.","Try <b>knock</b>."],
+   success:"Three knocks answer you from inside. The lock clicks.",
+   choices:[
+     { text:"Knock back",     kind:"correct", response:"Three knocks answer you from inside. The lock clicks." }, // A (correct)
+     { text:"Call out",       kind:"flavor",  response:"Your name answers you—but it isn’t your voice." },        // B
+     { text:"Rattle the handle", kind:"flavor", response:"The handle turns a fraction, then refuses—as if held from the other side." } // C
+   ],
+   sfx:"door"},
+
+  {id:"recording", file:"recording_area.png",
+   enter:"A dark lounge. The moon glares in the window.",
+   challenge:"Air vents hiss like words.",
+   accept:[/listen|be quiet|silence|stay silent|hear/],
+   hints:["Hush.","Let it speak first.","Try <b>listen</b>."],
+   success:"Whispers braid into a single sentence, then fall silent.",
+   choices:[
+     { text:"Speak into the vent", kind:"flavor", response:"Your breath returns as a stranger’s reply." }, // A
+     { text:"Listen",              kind:"correct", response:"Whispers braid into a single sentence, then fall silent." }, // B (correct)
+     { text:"Cover the vent",      kind:"flavor",  response:"The hiss stops—and so does the air, for one long second." } // C
+   ],
+   sfx:"whisper"},
+
+  {id:"it", file:"it_area.png",
+   enter:"IT bay. Dead monitors reflect your face.",
+   challenge:"A status prompt blinks on a nearby tower: <i>SYSTEM HUNG</i>.",
+   accept:[/reboot|restart|power ?cycle|powercycle|ctrl ?\+?alt ?\+?del|reset/],
+   hints:["The ancient ritual of machines.","Off, then on, then better.","Try <b>reboot</b>."],
+   success:"Fans spin up; screens awaken like eyes.",
+   choices:[
+     { text:"Check the cables",  kind:"flavor",  response:"The cables look new. The dust on them does not." },       // A
+     { text:"Press random keys", kind:"flavor",  response:"Nothing… then every monitor blinks your reflection in unison." }, // B
+     { text:"Reboot the tower",  kind:"correct", response:"Fans spin up; screens awaken like eyes." }                 // C (correct)
+   ],
+   sfx:"door", ghostCue:true},
+
+  {id:"lounge", file:"maya_office_zoomout_mirror.png",
+   enter:"Chairs wait in a circle. One is pulled out for you.",
+   challenge:"The fabric is warm.",
+   accept:[/sit|take a seat|have a seat|sit down/],
+   hints:["It’s inviting you.","Your legs know the word.","Try <b>sit</b>."],
+   success:"The chair sighs; lights dim to a heartbeat.",
+   choices:[
+     { text:"Sit down",          kind:"correct", response:"The chair sighs; lights dim to a heartbeat." }, // A (correct)
+     { text:"Push the chair back", kind:"flavor", response:"It glides to exactly where it started." },     // B
+     { text:"Stand in the circle", kind:"flavor", response:"Heat rises from the carpet like breathing." }  // C
+   ],
+   sfx:"whisper"},
+
+  {id:"cipher", file:"cipher_wall.png",
+   enter:"Plaster peeled back to brickwork. A giant letter watches: I.",
+   challenge:"The dust outlines your hand without touching.",
+   accept:[/touch|press|place hand|hand on wall/],
+   hints:["It wants your hand.","Push, don’t think.","Try <b>touch</b> the wall."],
+   success:"The brick warms; a red trail writes itself.",
+   choices:[
+     { text:"Blow the dust away", kind:"flavor",  response:"The letter stares through the haze, unblinking." }, // A
+     { text:"Touch the wall",     kind:"correct", response:"The brick warms; a red trail writes itself." },     // B (correct)
+     { text:"Step back",          kind:"flavor",  response:"You nearly bump into someone who isn’t there." }    // C
+   ],
+   sfx:"glass"}
+];
+
+/* ---------- AUDIO ---------- */
+const SFX={
+  ambient:"sounds/eerie-ambiance.mp3",
+  door:"sounds/open_door_sound.mp3",
+  creak:"sounds/rechinar-de-puerta-squeaking-door.mp3",
+  glass:"sounds/glass-shatter.mp3",
+  whisper:"sounds/creepy-ghost-whisper.mp3",
+  laugh1:"sounds/evil-laugh.mp3",
+  laugh2:"sounds/scary_laugh.mp3",
+  scream:"sounds/distant-demonic-scream-and-debris.mp3"
+};
+let ambient=null;
+function startAmbient(){
+  try{
+    ambient=new Audio(SFX.ambient);
+    ambient.loop=true; ambient.volume=0.35;
+    const p=ambient.play();
+    if(p && p.catch){
+      p.catch(()=>{
+        const kick=()=>{ ambient.play().catch(()=>{}); window.removeEventListener('pointerdown',kick); window.removeEventListener('keydown',kick); };
+        window.addEventListener('pointerdown',kick,{once:true});
+        window.addEventListener('keydown',kick,{once:true});
+      });
+    }
+  }catch(e){}
+}
+function play(name,vol=0.85){ try{ const a=new Audio(SFX[name]||name); a.volume=vol; a.play(); }catch(e){} }
+
+/* ---------- HELPERS ---------- */
+function say(h,cls='ghost'){ const d=document.createElement('div'); d.className='line '+cls; d.innerHTML=h; logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight; }
+function me(t){ say('› '+t,'me'); }
+function setScene(file){ sceneEl.style.backgroundImage='url(images/'+file+')'; }
+function flickerEntrance(lightFile,darkFile){
+  let t=0, flips=8;
+  (function loop(){ setScene((t%2===0)?lightFile:darkFile); t++; if(t<=flips){ setTimeout(loop,120+Math.random()*100);} else { setScene(darkFile); } })();
+}
+function refreshTray(){ lettersEl.textContent = found.concat(Array(10-found.length).fill('_')).join(' '); }
+function escapeRegex(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+/* ---------- Choices UI ---------- */
+function showChoices(choices){
+  if(!choices || !choices.length){ choicesEl.hidden=true; return; }
+  choicesEl.innerHTML='';
+  choices.slice(0,3).forEach((c,idx)=>{
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='choice';
+    const key = ['A','B','C'][idx];
+    btn.dataset.key = key;
+    btn.dataset.kind = c.kind;
+    btn.dataset.response = c.response;
+    btn.innerHTML = `<b>${key}</b> ${c.text}`;
+    btn.addEventListener('click',()=>selectChoice(key));
+    choicesEl.appendChild(btn);
+  });
+  choicesEl.hidden=false;
+}
+function hideChoices(){ choicesEl.hidden=true; }
+
+/* ---------- Final-phase choices (identical text + hints) ---------- */
+const FINAL_CHOICES = [
+  { text:"Say the word", kind:"final", response:"You have every letter you need." },
+  { text:"Say the word", kind:"final", response:"Check the CLUES tray—ten red strokes." },
+  { text:"Say the word", kind:"final", response:"Order matters. Arrange the letters." }
+];
+const FINAL_HINTS = [
+  "You have all the letters already.",
+  "Look at the CLUES tray at the bottom.",
+  "Reorder the letters to form a single word and type it.",
+  "Think of Maya’s core value.",
+  "Say it out loud—or type it: <b>innovation</b>."
+];
+
+function showFinalChoices(){
+  showChoices(FINAL_CHOICES);
+}
+
+function selectChoice(key){
+  const sc = finalPhase ? {choices:FINAL_CHOICES} : SCENES[iScene];
+  const idx = ({'A':0,'B':1,'C':2})[String(key).toUpperCase()];
+  if(idx==null || !sc.choices || !sc.choices[idx]) return;
+  const choice = sc.choices[idx];
+  me(`[${key}] ${choice.text}`);
+  say(choice.response);
+
+  if(choice.kind==='final'){
+    // cycle through layered hints; no advancement here
+    say(`<span class="note">${FINAL_HINTS[Math.min(finalHintIdx, FINAL_HINTS.length-1)]}</span>`);
+    finalHintIdx++;
+    return;
+  }
+
+  if(choice.kind==='correct'){
+    hideChoices();
+    dropLetter();
+  }else{
+    tries--;
+    if(tries===2 && SCENES[iScene].hints?.[0]) say(SCENES[iScene].hints[0]);
+    else if(tries===1 && SCENES[iScene].hints?.[1]) say(SCENES[iScene].hints[1]);
+    else if(tries<=0){ say(`<span class="note">${(SCENES[iScene].hints && SCENES[iScene].hints[2]) || 'Try again.'}</span>`); tries=3; }
+  }
+}
+
+/* ---------- GHOST (exactly twice @ enigma 3 & 8) ---------- */
+function ghostBuildUpThenShow(){
+  try{ play('whisper',0.7); }catch(e){}
+  flash.classList.add('show');
+  setTimeout(()=>{
+    face.classList.add('show');
+    play(Math.random()<0.5?'laugh1':'scream',0.8);
+    setTimeout(()=>{
+      flash.classList.remove('show');
+      face.classList.remove('show');
+    },650);
+  },220);
+}
+
+/* ---------- FLOW ---------- */
+function enter(n){
+  iScene=n;
+  const sc=SCENES[iScene];
+
+  if(sc.id==='lobby' && sc.flicker){
+    flickerEntrance(sc.fileLight||'light_maya_entrence.png', sc.fileDark);
+  } else {
+    setScene(sc.file || sc.fileDark);
+  }
+
+  if(sc.acceptDynamic){ sc.accept = sc.acceptDynamic(); }
+
+  say('<span class="note">'+sc.enter+'</span>');
+  say(sc.challenge);
+  tries=3;
+
+  showChoices(sc.choices);
+
+  if(sc.ghostCue){
+    if(sc.id==='mirror' && !ghost3Done){ ghost3Done=true; setTimeout(ghostBuildUpThenShow, 500); }
+    if(sc.id==='it' && !ghost8Done){ ghost8Done=true; setTimeout(ghostBuildUpThenShow, 500); }
+  }
+}
+
+function nextScene(){
+  const sc=SCENES[iScene]; play(sc.sfx||'door',0.7);
+  if(iScene < SCENES.length-1) enter(iScene+1);
+  else enter(0);
+}
+
+function dropLetter(extra){
+  if(!bag.length) return finishLetters();
+  const L=bag.pop(); found.push(L); refreshTray();
+  say('A red stroke appears: <b class="bloody">'+L+'</b>. '+(extra||''));
+  setTimeout(()=>{ if(bag.length) nextScene(); else finishLetters(); }, 900);
+}
+
+function finishLetters(){
+  finalPhase = true;
+  setScene('dark_maya_entrence.png');
+  hideChoices();
+  say('<span class="bloody">The loop tightens.</span> All letters are yours, '+userName+'.');
+  say('Speak the <b>single word</b> that breaks the building.');
+  finalHintIdx=0;
+  finalTries = 3;
+  showFinalChoices();  // <-- show identical “Say the word” options with hints
+}
+
+function win(){
+  if(freed) return;
+  freed = true;
+  try{ ambient && ambient.pause(); }catch(e){}
+  setScene('final_reveal.png');
+  play('door',0.9);
+  say('<span class="good">Light returns through the windows. The building exhales.</span>');
+  say('“Thank you, <b>'+userName+'</b>.”');
+  setTimeout(()=> say('<span class="note">Document uploaded: <b>innovation_blueprint.ai</b></span>'), 1800);
+}
+
+/* ---------- INPUT ---------- */
+function handle(line){
+  const txt=line.trim(); if(!txt) return; me(txt);
+
+  // final keyword phase
+  if(finalPhase){
+    // accept quick keys A/B/C or 1/2/3 for hint choices
+    const upper = txt.toUpperCase();
+    if(['A','B','C','1','2','3'].includes(upper)){
+      const keyMap = { '1':'A', '2':'B', '3':'C' };
+      selectChoice(keyMap[upper] || upper);
+      return;
+    }
+    // allow solving by typing the word
+    if(/^innovation$/i.test(txt)) return win();
+    finalTries--;
+    if(finalTries===2){ say('The lobby grins. Wrong word.'); }
+    else if(finalTries===1){ say('<span class="bloody">You have all the letters. Look at the CLUES.</span>'); }
+    else{ say('<span class="note">Order the letters into one word. Try: <b>innovation</b>.</span>'); finalTries=3; }
+    return;
+  }
+
+  if(freed){ say('<span class="good">It’s quiet now.</span>'); return; }
+
+  // quick keys: A/B/C or 1/2/3
+  const upper = txt.toUpperCase();
+  if(['A','B','C','1','2','3'].includes(upper)){
+    const keyMap = { '1':'A', '2':'B', '3':'C' };
+    selectChoice(keyMap[upper] || upper);
+    return;
+  }
+
+  // legacy verb handling (still supported)
+  const sc=SCENES[iScene];
+  const ok=(sc.accept||[]).some(re=>re.test(txt));
+  if(ok){
+    say(sc.success);
+    hideChoices();
+    dropLetter();
+    return;
+  }
+
+  // escalating per-scene hints (soft → sharper → explicit)
+  tries--;
+  const h = sc.hints || ["Try something else.","Keep going.","Try again."];
+  if(tries===2){ say(h[0]); }
+  else if(tries===1){ say(h[1]); }
+  else{ say('<span class="note">'+(h[2]||'Try again.')+'</span>'); tries=3; }
+}
+
+/* ---------- BOOT ---------- */
+function intro(){
+  startAmbient();
+  setScene('maya_door_spooky.png');
+  // SHORTER, punchier intro
+  say('It was a normal workday—almost.');
+  say('<b>Halloween Cake Day</b> at MAYA had the office buzzing.');
+  say('You laughed. You ate. You stayed late.');
+  say('At the elevator, a thought stopped you cold: <b>your car key</b>—left behind.');
+  say('You turned back. The hallway felt… quieter.');
+  say('Badge scan. <i>Beep.</i> Nothing. Again—nothing.');
+  say('A whisper broke the silence:// <span class="bloody">Who\'s there?</span> Tell me your name.');
+}
+let waitingName=true;
+
+document.getElementById('io').addEventListener('submit', function(e){
+  e.preventDefault();
+  const v=input.value; input.value='';
+  if(waitingName){
+    const n=v.trim();
+    if(n){
+      userName = n.replace(/[<>]/g,'');
+      waitingName=false;
+      say('Hello, <b>'+userName+'</b>. Walk softly. The halls remember.');
+      enter(0);
+    }else{
+      say('<span class="bad">Names open doors.</span>');
+    }
+    return;
+  }
+  handle(v);
+});
+
+window.onload=intro;
+
+/* ---------- UTILS ---------- */
+function refreshTray(){ lettersEl.textContent = found.concat(Array(10-found.length).fill('_')).join(' '); }
+</script>
+</body>
+</html>
