@@ -606,7 +606,7 @@ function handle(line){
     finalTries--;
     if(finalTries===2){ say('The lobby grins. Wrong word.'); }
     else if(finalTries===1){ say('<span class="bloody">You have all the letters. Look at the CLUES.</span>'); }
-	else if(finalTries===3){ say('<span class="note">Order the letters into one word. Try: <span class="glitch" data-txt="INNOVATION">INNOVATION</span>.</span>'); }
+	else if(finalTries===3){ say('<span class="note">Order the letters into one word. Type: <span class="glitch" data-txt="INNOVATION">INNOVATION</span>.</span>'); }
 	else if(finalTries===4){ say('<span class="note">Order the letters into one word. Try: <span class="glitch" data-txt="INNO">INNO...</span>.</span>'); }
     else{ say('Think of Maya’s core value.'); finalTries=5; }
     return;
@@ -676,3 +676,4 @@ function restartGame(){
 </script>
 </body>
 </html>
+
