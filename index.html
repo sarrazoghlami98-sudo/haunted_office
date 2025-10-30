@@ -96,13 +96,21 @@
   .glitch::before{color:#ffa64d;transform:translate(1px,-1px);mix-blend-mode:screen}
   .glitch::after{color:#ff3a00;transform:translate(-1px,1px);mix-blend-mode:screen}
   @keyframes glitch-jitter{0%,39%,70%,100%{transform:translate(0)}40%{transform:translate(1px)}41%{transform:translate(-1px)}71%{transform:translateY(1px)}72%{transform:translateY(-1px)}}
+   .term{
+    border:1px solid #1b2b35;border-radius:14px;overflow:hidden;
+    box-shadow:0 0 24px rgba(120,224,255,.12);
+    display:grid;
+    grid-template-rows: 45vh 1fr auto auto; /* adjust first value to change image height */
+    height:85vh;
+    background:#0c1318;
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>The Haunted Office</h1>
-    <span class="sub">A haunted escape story in the Maya office</span>
+    <span class="sub">A haunted escape story in the Maya HTT office</span>
   </header>
 
   <div class="term">
@@ -127,8 +135,9 @@
   <div id="creditsBg" class="credits-bg"></div>
   <div class="credits-card">
     <h2 class="credits-title">C R E D I T S</h2>
-    <p>Created by <b>S. Zoghlami</b></p>
-    <p class="note">Don’t forget to <b>vote for this project on Viva Engage</b>.<br/>The building notices who looks away.</p>
+    <p>Created by <b>Sarra Zoghlami</b></p>
+	<p>Happy Halloween!</p>
+    <p class="note">Don’t forget to like and follow <span class='glitch' data-txt='MAYA HTT'>MAYA HTT</span>.<br/>The building notices who looks away.</p>
     <div class="credits-actions">
       <button id="creditsWake" class="credits-btn" type="button">Wake up</button>
       <button id="creditsAgain" class="credits-btn" type="button">Risk another night</button>
@@ -250,7 +259,7 @@ const SCENES=[
 {id:"lobby",
   fileDark:"dark_maya_entrence.png",
   fileLight:"light_maya_entrence.png",
-  enter:"The Maya lobby is empty. The lights argue about staying on.",
+  enter:"The Maya lobby is empty. The lights flicker like they can't decide.",
   challenge:"A reception screen flickers: <span class='glitch' data-txt='WELCOME TO MAYA HTT'>WELCOME TO MAYA HTT</span>.",
   accept:[/look|scan|observe|read|touch.*screen|screen/],
   hints:["It twitches when you watch it.","Don't touch—just notice.","Try <b>look</b>."],
@@ -258,28 +267,28 @@ const SCENES=[
   choices:[
     {text:"Call for security",kind:"flavor",response:"Your voice echoes. No one answers. The elevator hums nervously.",sfx:"phone"},
     {text:"Look at the screen",kind:"correct",response:"The cursor trembles; something inside the monitor blinks back.",sfx:"light"},
-    {text:"Try your badge again",kind:"flavor",response:"The reader beeps once, then dies completely. Something’s drained it.",sfx:"badge"}
+    {text:"Try your badge again",kind:"flavor",response:"The reader beeps once, then dies completely. Something drained it dry.",sfx:"badge"}
   ],
   sfx:"light",flicker:true},
 
 {id:"hall",file:"maya_hall.png",
  enter:"A corridor yawns ahead. Footsteps echo behind you.",
- challenge:"A faint voice: “Move while you still can.”",
+ challenge:"A faint voice whispers: “Move while you still can.”",
  accept:[/^(move|run|walk)$/i,/\bmove\b|\brun\b|\bwalk\b/i],
- hints:["It wants you to go now.","Faster might be safer.","Try <b>move</b> or <b>walk</b> or <b>run</b>."],
+ hints:["It wants you to go now.","Faster might be safer.","Try <b>move</b>, <b>walk</b>, or <b>run</b>."],
  success:"Your steps quicken as lights stutter awake.",
  choices:[
-   {text:"Look back",kind:"flavor",response:"Nothing there. But the air behind you feels crowded.",sfx:"scream"},
+   {text:"Look back",kind:"flavor",response:"Nothing there, but the air behind you feels crowded.",sfx:"scream"},
    {text:"Stay still",kind:"flavor",response:"The whisper grows colder: “I said move.”",sfx:"whisper"},
    {text:"Move forward",kind:"correct",response:"Your steps quicken as lights stutter awake."}
  ],
  sfx:"steps"},
 
 {id:"mirror",file:"maya_mirror_room.png",
- enter:"The mirror room. Your reflection types before you.",
+ enter:"The mirror room. Your reflection types before you do.",
  challenge:"The glass asks for a password it already knows.",
  acceptDynamic:()=>[ new RegExp('^'+escapeRegex(userName)+'$','i'), /mirror|reflect|reflection|say my name|my name/ ],
- hints:["It knows you already.","Mirrors prefer introductions.","Try your <b>name</b>."],
+ hints:["It already knows you.","Mirrors prefer introductions.","Try your <b>name</b>."],
  success:"The reflection smiles and mouths your name.",
  choices:[
    {text:"Say your name",kind:"correct",response:"The reflection smiles and mouths your name."},
@@ -288,31 +297,33 @@ const SCENES=[
  ],
  sfx:"glass",ghostCue:true},
 
+
 {id:"coffee",file:"maya_cofee_table.png",
  enter:"Two cups steam on the table. Someone was just here.",
  challenge:"A whisper: “Close your eyes. Don’t turn around.”",
  accept:[/close.*eyes|eyes.*closed|keep eyes shut|i close my eyes/],
- hints:["Blink slower.","Dark helps here.","Try <b>close my eyes</b>."],
- success:"Darkness calms the room; a breath at your neck stops.",
+ hints:["Blink slowly.","The dark helps here.","Try <b>close my eyes</b>."],
+ success:"Darkness calms the room; the breath at your neck stops.",
  choices:[
    {text:"Turn around",kind:"flavor",response:"Cold air pours over your shoulders. Nothing stands there—yet."},
-   {text:"Close your eyes",kind:"correct",response:"Darkness calms the room; a breath at your neck stops."},
+   {text:"Close your eyes",kind:"correct",response:"Darkness calms the room; the breath at your neck stops."},
    {text:"Speak loudly",kind:"flavor",response:"Your voice disturbs dust motes that weren’t there a second ago."}
  ],
  sfx:"woman"},
 
 {id:"cafeteria",file:"cafeteria_dark.png",
- enter:"Cafeteria. Tables like altars. The exit sign blinks off-beat.",
- challenge:"On the wall: symbols that aren’t handwriting.",
+ enter:"Cafeteria. Tables like altars. The exit sign blinks offbeat.",
+ challenge:"On the wall: symbols that aren’t handwritten.",
  accept:[/decode|read|inspect|symbols|runes|translate/],
- hints:["Those marks can be read.","Meaning leaks if you watch long enough.","Try <b>decode</b>."],
+ hints:["Those marks can be read.","Meaning leaks out if you watch long enough.","Try <b>decode</b>."],
  success:"The runes dissolve, leaving only a red letter.",
  choices:[
-   {text:"Ignore the wall",kind:"flavor",response:"The exit sign blinks a different rhythm now—like a countdown."},
+   {text:"Ignore the wall",kind:"flavor",response:"The exit sign blinks in a different rhythm now—like a countdown."},
    {text:"Wipe the marks",kind:"flavor",response:"Your fingers come away clean, but the marks look fresher."},
    {text:"Decode the symbols",kind:"correct",response:"The runes dissolve, leaving only a red letter."}
  ],
  sfx:"scream"},
+
 
 {id:"meeting",file:"meeting_room.png",
  enter:"Glass-walled meeting room. The door won't budge.",
@@ -323,18 +334,18 @@ const SCENES=[
  choices:[
    {text:"Knock back",kind:"correct",response:"Three knocks answer you from inside. The lock clicks."},
    {text:"Call out",kind:"flavor",response:"Your name answers you—but it isn’t your voice."},
-   {text:"Rattle the handle",kind:"flavor",response:"The handle turns a fraction, then refuses—as if held from the other side."}
+   {text:"Rattle the handle",kind:"flavor",response:"The handle turns a fraction, then won't move—as if held from the other side."}
  ],
  sfx:"knock"},
 
 {id:"recording",file:"recording_area.png",
- enter:"A dark lounge. The moon glares in the window.",
- challenge:"Air vents hiss like words.",
+ enter:"A dark lounge. The moon glares through the window.",
+ challenge:"The vents hiss like words.",
  accept:[/listen|be quiet|silence|stay silent|hear/],
  hints:["Hush.","Let it speak first.","Try <b>listen</b>."],
  success:"Whispers braid into a single sentence, then fall silent.",
  choices:[
-   {text:"Speak into the vent",kind:"flavor",response:"Your breath returns as a stranger’s reply."},
+   {text:"Speak into the vent",kind:"flavor",response:"Your breath comes back as a stranger’s reply."},
    {text:"Listen",kind:"correct",response:"Whispers braid into a single sentence, then fall silent."},
    {text:"Cover the vent",kind:"flavor",response:"The hiss stops—and so does the air, for one long second."}
  ],
@@ -348,37 +359,41 @@ const SCENES=[
  success:"Fans spin up; screens awaken like eyes.",
  choices:[
    {text:"Check the cables",kind:"flavor",response:"The cables look new. The dust on them does not."},
-   {text:"Press random keys",kind:"flavor",response:"Nothing… then every monitor blinks your reflection in unison."},
+   {text:"Press random keys",kind:"flavor",response:"Nothing… then every monitor blinks; your reflection flickers in unison."},
    {text:"Reboot the tower",kind:"correct",response:"Fans spin up; screens awaken like eyes."}
  ],
  sfx:"door",ghostCue:true},
+
 
 {id:"lounge",file:"maya_office_zoomout_mirror.png",
  enter:"Chairs wait in a circle. One is pulled out for you.",
  challenge:"The fabric is warm.",
  accept:[/sit|take a seat|have a seat|sit down/],
- hints:["It’s inviting you.","Your legs know the word.","Try <b>sit</b>."],
- success:"The chair sighs; lights dim to a heartbeat.",
+ hints:["It’s inviting you.","Your legs already know the word.","Try <b>sit</b>."],
+ success:"The chair sighs; the lights dim to a heartbeat.",
  choices:[
-   {text:"Sit down",kind:"correct",response:"The chair sighs; lights dim to a heartbeat."},
-   {text:"Push the chair back",kind:"flavor",response:"It glides to exactly where it started."},
+   {text:"Sit down",kind:"correct",response:"The chair sighs; the lights dim to a heartbeat."},
+   {text:"Push the chair back",kind:"flavor",response:"It glides back to exactly where it started."},
    {text:"Stand in the circle",kind:"flavor",response:"Heat rises from the carpet like breathing."}
  ],
  sfx:"whisper"},
 
+
 {id:"cipher",file:"cipher_wall.png",
- enter:"Plaster peeled back to brickwork. The Earth is surrounded by dragons!",
- challenge:"The dust outlines your hand without touching.",
- accept:[/touch|press|place hand|hand on wall/],
- hints:["It wants your hand.","Push, don’t think.","Try <b>touch</b> the wall."],
+ enter:"Plaster peels back to brickwork. A mural shows Earth ringed with dragons.",
+ challenge:"The mural whispers: “At Maya HTT, we push the limits of knowledge—one dragon at a time.”",
+ accept:[/push.*dragons?/,/touch|press|place hand|hand on wall/],
+ hints:["It wants your hand.","Push—don’t think.","Try <b>Push the dragons</b>."],
  success:"The brick warms; a red trail writes itself.",
  choices:[
-   {text:"Blow the dust away",kind:"flavor",response:"The letter stares through the haze, unblinking."},
-   {text:"Touch the wall",kind:"correct",response:"The brick warms; a red trail writes itself."},
+   {text:"Lean closer to the mural",kind:"flavor",response:"The dragons don’t move. Something behind the wall does."},
+   {text:"Push the dragons",kind:"correct",response:"The dragons shift and align, forming a red pattern across the Earth."},
    {text:"Step back",kind:"flavor",response:"You nearly bump into someone who isn’t there."}
  ],
  sfx:"laugh2"}
 ];
+
+
 
 /* === GHOST === */
 function ghostBuildUpThenShow(){
@@ -460,28 +475,30 @@ function dropLetter(extra){
 }
 
 const FINAL_CHOICES = [
-  { text:"Say the word", kind:"final", response:"The spark that redraws the map — one dragon at a time." },
+  { text:"Type the word", kind:"final", response:"The spark that redraws the map—one dragon at a time." },
   { text:"Type the word", kind:"final", response:"<span class='bloody'>You have all the letters. Look at the CLUES.</span>" },
-  { text:"Say the word", kind:"final", response:"Order matters. Type it!" }
+  { text:"Type the word", kind:"final", response:"Order matters. Type it!" }
 ];
 
 const FINAL_HINTS = [
   "You have all the letters already.",
   "Look at the CLUES tray at the bottom.",
-  "Reorder the letters to form a single word and type it.",
-  "Think of Maya’s core value.",
+  "Reorder the letters into a single word, then type it.",
+  "Think of Maya HTT’s core value.",
   "Say it out loud—or type it: <b>INNOVATION</b>."
 ];
+
 
 function finishLetters(){
   finalPhase = true;
   setScene('dark_maya_entrence.png');
   hideChoices();
-  say('<span class="bloody">The loop tightens.</span> All letters are yours, '+userName+'.');
-  say('Speak the <b>single word</b> that breaks the building.');
+  say('<span class="bloody">The loop tightens.</span> All the letters are yours, '+userName+'.');
+  say('Speak the <b>single word</b> that breaks this building.');
   finalTries = 3;
   showChoices(FINAL_CHOICES);
 }
+
 
 function win(){
   if(freed) return;
@@ -489,7 +506,7 @@ function win(){
   stopAmbient();
   setScene('final_reveal.png');
   play('door',0.9);
-  say('<span class="good">Light returns through the windows. The building exhales.</span>');
+  say('<span class="good">Light pours through the windows; the building exhales.</span>');
   say('“Thank you, <b>'+userName+'</b>.”');
 
   setTimeout(()=>{
@@ -497,6 +514,7 @@ function win(){
     showAgainChoices();
   }, 2200);
 }
+
 
 const AGAIN_CHOICES = [
   { text:"Yes… let it loop again", kind:"restart", response:"The lights dim. The loop yawns open." },
@@ -635,9 +653,11 @@ function handle(line){
 function intro(){
   startAmbient();
   setScene('maya_door_spooky.png');
-  say('It was a normal workday—almost. <b>Halloween Cake Day</b> at MAYA had the office buzzing. You laughed. You ate. You stayed late. At the elevator, a thought stopped you cold: <b>your car key</b>—left behind. You turned back. The hallway felt… quieter. Badge scan. <i>Beep.</i> Nothing. Again—nothing.');
-  say('A whisper broke the silence:// <span class="bloody">Who\'s there?</span> Tell me your name.');
+  say('It was a normal workday—almost. <b>Halloween Cake Day</b> at Maya HTT had the office buzzing. You laughed. You ate. You stayed late. At the elevator, a thought stopped you cold—<b>your car key</b>, left behind.')
+   say('You turned back. The hallway felt… quieter. Badge scan. <i>Beep.</i> Nothing. Again—nothing.');
+  say('A whisper broke the silence: <span class="bloody">Who\'s there?</span> Tell me your name.');
 }
+
 let waitingName = true;
 
 document.getElementById('io').addEventListener('submit', function(e){
@@ -669,14 +689,11 @@ function restartGame(){
   iScene=0; tries=3; finalTries=3;
   logEl.innerHTML='';
   creditsEl.classList.remove('show');
-  say('The night resets. Footsteps begin again.');
+  say('The night resets. Footsteps start up again.');
   startAmbient();
   enter(0);
 }
+
 </script>
 </body>
 </html>
-
-
-
-
